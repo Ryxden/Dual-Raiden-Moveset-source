@@ -1,0 +1,11 @@
+﻿  dllmain.cpp
+  C:\Users\Renzo\Downloads\mgr-plugin-sdk-main\mgr-plugin-sdk-main\shared\dxsdk\dinput.h: DIRECTINPUT_VERSION undefined. Defaulting to version 0x0800
+C:\Users\Renzo\source\repos\Moveset\Moveset\dllmain.cpp(110,161): warning C4244: 'argument': conversion from 'float' to 'int', possible loss of data
+C:\Users\Renzo\source\repos\Moveset\Moveset\dllmain.cpp(148,1): warning C4067: unexpected tokens following preprocessor directive - expected a newline
+C:\Users\Renzo\Downloads\mgr-plugin-sdk-main\mgr-plugin-sdk-main\game\lib.h(196,39): warning C4018: '>': signed/unsigned mismatch
+  Generating code
+  140 of 2035 functions ( 6.9%) were compiled, the rest were copied from previous compilation.
+    0 functions were new in current compilation
+    20 functions had inline decision re-evaluated but remain unchanged
+  Finished generating code
+  Moveset.vcxproj -> C:\Users\Renzo\source\repos\Moveset\Release\Moveset.asi
