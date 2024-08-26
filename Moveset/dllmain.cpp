@@ -264,6 +264,12 @@ public:
 					}
 					*/
 				}
+				if (blademode == 1 && framespassed>3)
+				{
+					Trigger::GameFlags.GAME_ZANGEKIMODE = 0;
+					player->isBladeModeActive() == false;
+					blademode = 0;
+				}
 				/*
 				if ((ReadSinglePointer(player->field_774, 0x14) != 1339) && pressed == 2 && amount==1 && (!Trigger::StaFlags.STA_QTE) && (!player->isCodecTalk()) && (!player->isBladeModeActive()) && (Trigger::GameFlags.GAME_DEPRESSSION_RAIDEN == 0) && (Trigger::StaFlags.STA_PAUSE == 0))
 				{
@@ -335,10 +341,14 @@ public:
                     }
                     if (shared::IsKeyPressed(std::stoi(KeyForBladeMode, nullptr, 16), true) || IsButtonPressed(xinputl2asstring))
                     {
+						framespassed = 0;
 						player->setState(0x0, 0, 0, 0);
-						player->setState(0x46, 0, 0, 0);
+						Trigger::GameFlags.GAME_ZANGEKIMODE = 1;
+						player->isBladeModeActive() == true;
+						blademode = 1;
                     }
                 }
+				
 				/* Boss Raiden JCE
 				if (((shared::IsKeyPressed(VK_RBUTTON, true) || IsButtonPressed(xinputtriangleasstring)) && ReadSinglePointer(player->field_774, 0x14) == 654 && player->getCurrentFuelCapacity()==maxfc))
 				{
