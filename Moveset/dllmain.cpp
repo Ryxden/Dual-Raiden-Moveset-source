@@ -137,6 +137,11 @@ static unsigned int ReadSinglePointer(unsigned int baseAddress, unsigned int off
     return injector::ReadMemory<unsigned int>(baseAddress + offset, true);
 }
 
+int RequestFaceSheathAnimationById2(Behavior* beh, int arg0, int a2, Entity* a4, int a5, float a6, float a7, int a8, float a9, float a10)
+{
+	return ((int(__thiscall*)(Behavior * beh, int arg0, int a2, Entity * a4, int a5, float a6, float a7, int a8, float a9, float a10))(shared::base + 0x6A45F0))(beh, arg0, a2, a4, a5, a6, a7, a8, a9, a10);
+}
+
 std::random_device rd;
 std::mt19937 gen(rd());
 #ifdef _MSC_VER < 1700 //pre 2012
@@ -193,40 +198,11 @@ int AnimationMapID5 = iniReader.ReadInteger("Animation 5", "AnimationMapID", 4);
 bool AirAnimation5 = iniReader.ReadBoolean("Animation 5", "AirAnimation", false);
 int AttackSlot5 = iniReader.ReadInteger("Animation 5", "AttackSlot", 0);
 
-std::string Key6 = iniReader.ReadString("Animation 6", "Key", "0");
-std::string AnimationAction6 = iniReader.ReadString("Animation 6", "AnimationAction", "0");
-int AnimationMapID6 = iniReader.ReadInteger("Animation 6", "AnimationMapID", 4);
-bool AirAnimation6 = iniReader.ReadBoolean("Animation 6", "AirAnimation", false);
-int AttackSlot6 = iniReader.ReadInteger("Animation 6", "AttackSlot", 0);
-
-std::string Key7 = iniReader.ReadString("Animation 7", "Key", "0");
-std::string AnimationAction7 = iniReader.ReadString("Animation 7", "AnimationAction", "0");
-int AnimationMapID7 = iniReader.ReadInteger("Animation 7", "AnimationMapID", 4);
-bool AirAnimation7 = iniReader.ReadBoolean("Animation 7", "AirAnimation", false);
-int AttackSlot7 = iniReader.ReadInteger("Animation 7", "AttackSlot", 0);
-
-std::string Key8 = iniReader.ReadString("Animation 8", "Key", "0");
-std::string AnimationAction8 = iniReader.ReadString("Animation 8", "AnimationAction", "0");
-int AnimationMapID8 = iniReader.ReadInteger("Animation 8", "AnimationMapID", 4);
-bool AirAnimation8 = iniReader.ReadBoolean("Animation 8", "AirAnimation", false);
-int AttackSlot8 = iniReader.ReadInteger("Animation 8", "AttackSlot", 0);
-
-std::string Key9 = iniReader.ReadString("Animation 9", "Key", "0");
-std::string AnimationAction9 = iniReader.ReadString("Animation 9", "AnimationAction", "0");
-int AnimationMapID9 = iniReader.ReadInteger("Animation 9", "AnimationMapID", 4);
-bool AirAnimation9 = iniReader.ReadBoolean("Animation 9", "AirAnimation", false);
-int AttackSlot9 = iniReader.ReadInteger("Animation 9", "AttackSlot", 0);
-
-std::string Key10 = iniReader.ReadString("Animation 10", "Key", "0");
-std::string AnimationAction10 = iniReader.ReadString("Animation 10", "AnimationAction", "0");
-int AnimationMapID10 = iniReader.ReadInteger("Animation 10", "AnimationMapID", 4);
-bool AirAnimation10 = iniReader.ReadBoolean("Animation 10", "AirAnimation", false);
-int AttackSlot10 = iniReader.ReadInteger("Animation 10", "AttackSlot", 0);
-
 int framespassed = 0;
 int curranim = 0;
 bool animationcanbeplayed = false;
 bool animationisntplayable = false;
+int samanimold = 0;
 
 bool CurrentAnimationCurrentlyCancelable(string curranim_as_string, int framespassed)
 {
@@ -265,11 +241,9 @@ bool buttonpressed1 = false;
 bool buttonpressed2 = false;
 bool buttonpressed3 = false;
 bool buttonpressed4 = false;
-bool buttonpressed5 = false;
-bool buttonpressed6 = false;
-bool buttonpressed7 = false;
-bool buttonpressed8 = false;
-bool buttonpressed9 = false;
+bool buttonpressedjump = false;
+bool buttonpressedrbut = false;
+bool buttonpressedlbut = false;
 bool buttonpressed10 = false;
 bool buttonpressed11 = false;
 bool buttonpressed12 = false;
@@ -281,21 +255,26 @@ int samanim2 = 0;
 int samanim3 = 0;
 int prevanim = 0;
 bool blademode = false;
+bool airkick = false;
 int i = 0;
 int chargeframes = 0;
+bool jump = true;
+bool vel = false;
+int oldvel = 0;
+bool airattack = false;
 class RAIDEN {
 public:
-    RAIDEN()
-    {
+	RAIDEN()
+	{
 
-        Events::OnTickEvent.before += []() {
-            Pl0000* player = cGameUIManager::Instance.m_pPlayer;
-            if (player)
-                prevAnim = ReadSinglePointer(player->field_774, 0x14);
-            };
+		Events::OnTickEvent.before += []() {
+			Pl0000* player = cGameUIManager::Instance.m_pPlayer;
+			if (player)
+				prevAnim = ReadSinglePointer(player->field_774, 0x14);
+			};
 
-        Events::OnTickEvent.after += []() {
-            Pl0000* player = cGameUIManager::Instance.m_pPlayer;
+		Events::OnTickEvent.after += []() {
+			Pl0000* player = cGameUIManager::Instance.m_pPlayer;
 			auto pl = PlayerManagerImplement::pInstance;
 			if (player)
 			{
@@ -304,6 +283,146 @@ public:
 					requestAnimationByMap2(player, anim, 0, 0.0f, 1.0f, 0x8100000, -1.0f, 1.0f);
 					AnimationPlayer(player, 1.0, 1.0);
 					inp = false;
+				}
+				
+				if (shared::IsKeyPressed(0x20, true))
+				{
+					if (!buttonpressedjump)
+					{
+						if (!Trigger::StaFlags.STA_QTE
+							&& !Trigger::GameFlags.GAME_DEPRESSSION_RAIDEN
+							&& !Trigger::StaFlags.STA_PAUSE
+							&& !Trigger::StaFlags.STA_EVENT
+							&& !Trigger::GameFlags.GAME_PLAYER_ATTACK_OFF
+							&& !player->isCodecTalk()
+							&& !player->isBladeModeActive()
+							&& player->getCurrentAction() != 0x13D
+							&& player->getCurrentAction() != 0x13F
+							&& player->getCurrentAction() != 0x13E
+							&& !animationisntplayable
+							&& animationcanbeplayed
+							&& player->isInAir()
+							&& ReadSinglePointer(player->field_774, 0x14) != 1347
+							&& !jump)
+						{
+							if (player->getCurrentAction() == 0x5B)
+							{
+								player->m_vecVelocity.y = 0.488f + *(float*)(shared::base + 0x123D2CC);
+							}
+							else
+							{
+								if (player->getCurrentAction() == 0x5C)
+								{
+									player->m_vecVelocity.y = 0.35f + *(float*)(shared::base + 0x123D2CC);
+								}
+								else
+									player->m_vecVelocity.y = 0.225f + *(float*)(shared::base + 0x123D2CC);
+							}							
+							jump = true;
+							anim = 1347;
+							inp = true;
+						}
+					}
+					buttonpressedjump = true;
+
+				}
+				else
+					buttonpressedjump = false;
+
+				if (shared::IsKeyPressed(VK_RBUTTON, true))
+				{
+					if (!buttonpressedrbut)
+					{
+						if (!Trigger::StaFlags.STA_QTE
+							&& !Trigger::GameFlags.GAME_DEPRESSSION_RAIDEN
+							&& !Trigger::StaFlags.STA_PAUSE
+							&& !Trigger::StaFlags.STA_EVENT
+							&& !Trigger::GameFlags.GAME_PLAYER_ATTACK_OFF
+							&& !player->isCodecTalk()
+							&& !player->isBladeModeActive()
+							&& player->getCurrentAction() != 0x13D
+							&& player->getCurrentAction() != 0x13F
+							&& player->getCurrentAction() != 0x13E
+							&& player->getCurrentAction() != 0x5E
+							&& !animationisntplayable
+							&& animationcanbeplayed
+							&& ReadSinglePointer(player->field_774, 0x14) != 951
+							&& jump
+							&& !airkick)
+						{
+							airkick = true;
+							player->setState(0x5C, 1, 0, 0);
+						}
+						else
+						{
+							if (!Trigger::StaFlags.STA_QTE
+								&& !Trigger::GameFlags.GAME_DEPRESSSION_RAIDEN
+								&& !Trigger::StaFlags.STA_PAUSE
+								&& !Trigger::StaFlags.STA_EVENT
+								&& !Trigger::GameFlags.GAME_PLAYER_ATTACK_OFF
+								&& !player->isCodecTalk()
+								&& !player->isBladeModeActive()
+								&& player->getCurrentAction() != 0x13D
+								&& player->getCurrentAction() != 0x13F
+								&& player->getCurrentAction() != 0x13E
+								&& player->getCurrentAction() != 0x5E
+								&& !animationisntplayable
+								&& animationcanbeplayed
+								&& airkick
+								&& jump)
+							{
+								player->setState(0x5D, 1, 0, 0);
+							}
+						}
+						}
+					buttonpressedrbut = true;
+
+				}
+				else
+					buttonpressedrbut = false;
+				if (shared::IsKeyPressed(VK_LBUTTON, true))
+				{
+					if (!buttonpressedlbut)
+					{
+						if (!Trigger::StaFlags.STA_QTE
+							&& !Trigger::GameFlags.GAME_DEPRESSSION_RAIDEN
+							&& !Trigger::StaFlags.STA_PAUSE
+							&& !Trigger::StaFlags.STA_EVENT
+							&& !Trigger::GameFlags.GAME_PLAYER_ATTACK_OFF
+							&& !player->isCodecTalk()
+							&& !player->isBladeModeActive()
+							&& player->getCurrentAction() != 0x13D
+							&& player->getCurrentAction() != 0x13F
+							&& player->getCurrentAction() != 0x13E
+							&& player->getCurrentAction() != 0x5E
+							&& !animationisntplayable
+							&& jump
+							&& ReadSinglePointer(player->field_774, 0x14) != 1348
+							&& !airattack
+							&& player->getCurrentAction() != 0x5D)
+						{
+							airattack = true;
+							player->setState(0x5B, 1, 0, 0);
+							anim = 1348;
+							inp = true;
+						}
+						
+					}
+					buttonpressedlbut = true;
+
+				}
+				else
+					buttonpressedlbut = false;
+					
+				if (ReadSinglePointer(player->field_774, 0x14) == 951)
+				{
+					airkick = true;
+				}
+				if (!player->isInAir())
+				{
+					jump = false;
+					airkick = false;
+					airattack = false;
 				}
 				if (shared::IsKeyPressed(0x42, true) && pl->GetCustomWeaponEquipped() == 0 && pl->GetMainWeaponEquipped() == 5)
 				{
@@ -325,25 +444,29 @@ public:
 						{
 							player->setState(0x63, 0, 0, 0);
 							framespassed = 0;
-							switch (ReadSinglePointer(player->field_774, 0x14))
+							switch (samanim)
 							{
 							case 1338:
 								samanim = 1339;
+								samanimold = 1339;
 								anim = 1339;
 								inp = true;
 								break;
 							case 1339:
 								samanim = 1340;
+								samanimold = 1340;
 								anim = 1340;
 								inp = true;
 								break;
 							case 1340:
-								samanim = 1341;
-								anim = 1341;
+								samanim = 1346;
+								samanimold = 1346;
+								anim = 1346;
 								inp = true;
 								break;
 							default:
 								samanim = 1338;
+								samanimold = 1338;
 								anim = 1338;
 								inp = true;
 								break;
@@ -357,10 +480,15 @@ public:
 				if (ReadSinglePointer(player->field_774, 0x14) != 1338
 					&& ReadSinglePointer(player->field_774, 0x14) != 1339
 					&& ReadSinglePointer(player->field_774, 0x14) != 1340
-					&& ReadSinglePointer(player->field_774, 0x14) != 1341
-					&& ReadSinglePointer(player->field_774, 0x14) != 653)
+					&& ReadSinglePointer(player->field_774, 0x14) != 1346
+					&& ReadSinglePointer(player->field_774, 0x14) != 653
+					&& player->getCurrentAction() != 0x63)
 				{
 					samanim = 0;
+				}
+				if (player->getCurrentAction() == 0x63)
+				{
+					samanim = samanimold;
 				}
 
 				if ((shared::IsKeyPressed(0xA4, true) || shared::IsKeyPressed(0xA5, true)) 
@@ -380,8 +508,8 @@ public:
 					{
 						chargeframes++;
 
-						if (chargeframes < 100 
-							&& framespassed>20 
+						if (chargeframes < 60 
+							&& framespassed>5
 							&& chargeframes > 10
 							&& ReadSinglePointer(player->field_774, 0x14) != 1344)
 						{
@@ -400,8 +528,9 @@ public:
 								&& !player->isInAir()
 								&& ReadSinglePointer(player->field_774, 0x14) != 653)
 							{
-								player->setState(0x74, 0, 0, 0);
+								player->setState(0x5B, 1, 0, 0);
 								framespassed = 0;
+								RequestFaceSheathAnimationById2(player, 2370, 0, 0, 1.0f, 0x8100000, -1.0f, 1.0f, 0, 0);
 								anim = 653;
 								inp = true;
 								samanim3 = 1;
@@ -410,7 +539,7 @@ public:
 						switch (samanim)
 						{
 						case 1339:
-							if (chargeframes == 100)
+							if (chargeframes == 60)
 							{
 								if (!Trigger::StaFlags.STA_QTE
 									&& !Trigger::GameFlags.GAME_DEPRESSSION_RAIDEN
@@ -426,14 +555,15 @@ public:
 									&& ReadSinglePointer(player->field_774, 0x14) == 653)
 								{
 									samanim = 0;
-									player->setState(0x74, 0, 0, 0);
+									samanimold = 0;
+									player->setState(0x63, 0, 0, 0);
 									anim = 1344;
 									inp = true;
 								}
 							}
 								break;
 						default:
-							if (chargeframes == 100)
+							if (chargeframes == 60)
 							{
 								if (!Trigger::StaFlags.STA_QTE
 									&& !Trigger::GameFlags.GAME_DEPRESSSION_RAIDEN
@@ -448,7 +578,9 @@ public:
 									&& !animationisntplayable
 									&& ReadSinglePointer(player->field_774, 0x14) == 653)
 								{
-									player->setState(0x74, 0, 0, 0);
+									samanim = 0;
+									samanimold = 0;
+									player->setState(0x74, 1, 0, 0);
 									anim = 1342;
 									inp = true;
 									samanim = 0;
@@ -849,6 +981,10 @@ void gui::RenderWindow()
 								ImGui::Value("attack", attack); 
 								ImGui::Value("samanim", samanim);
 								ImGui::Value("MainWeapon", pl->GetMainWeaponEquipped());
+								ImGui::Value("jump", jump);
+								ImGui::Value("airkick", airkick);
+								ImGui::Value("velocity1", *(float*)(shared::base + 0x123D2CC));
+								ImGui::Value("velocity2", player->m_vecVelocity.y);
 								ImGui::Separator();
 								ImGui::Value("Enemy Current Animation ID", targetEnemy->getCurrentActionId());
 								ImGui::Text("Enemy Animation Name: %s", GetAnimationNameById((int**)targetEnemy->m_ppAnimationMap, ReadSinglePointer(targetEnemy->field_774, 0x14)));
