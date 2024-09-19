@@ -166,6 +166,8 @@ std::string xinputlthumbleft = iniReader.ReadString("Controller Buttons", "XINPU
 std::string xinputlthumbright = iniReader.ReadString("Controller Buttons", "XINPUT_GAMEPAD_LEFT_THUMB_RIGHT", "XINPUT_GAMEPAD_LEFT_THUMB_RIGHT");
 std::string Samlightattack = iniReader.ReadString("Keys", "KeyForSamLightAttacks", "42");
 std::string Samchargedattack = iniReader.ReadString("Keys", "KeyForSamChargedAttacks", "43");
+int chargetime = iniReader.ReadInteger("Misc", "DefaultChargeTime", 10);
+int chargetime2 = iniReader.ReadInteger("Misc", "2ndChargeTime", 10);
 
 int AnimationAmount = iniReader.ReadInteger("Animations", "AnimationAmount", 0);
 
@@ -266,6 +268,8 @@ bool airattack2 = false;
 bool vel = false;
 int oldvel = 0;
 bool airattack = false;
+bool velocitychanged = false;
+bool velocitychanged2 = false;
 class RAIDEN {
 public:
 	RAIDEN()
@@ -294,7 +298,7 @@ public:
 					|| ReadSinglePointer(player->field_774, 0x14) == 381)
 				{
 					samanimnocharge = 0;
-				}
+				}	
 				if (shared::IsKeyPressed(0x20, true))
 				{
 					if (!buttonpressedjump)
@@ -313,7 +317,7 @@ public:
 							&& animationcanbeplayed
 							&& player->isInAir()
 							&& ReadSinglePointer(player->field_774, 0x14) != 1347
-							&& player->getCurrentAction() != 0x5E
+							&& (player->getCurrentAction() != 0x5E || ReadSinglePointer(player->field_774, 0x14) == 960)
 							&& !jump)
 						{
 							if (player->getCurrentAction() == 0x5B)
@@ -360,7 +364,7 @@ public:
 							&& player->getCurrentAction() != 0x13D
 							&& player->getCurrentAction() != 0x13F
 							&& player->getCurrentAction() != 0x13E
-							&& player->getCurrentAction() != 0x5E
+							&& (player->getCurrentAction() != 0x5E || ReadSinglePointer(player->field_774, 0x14) == 960)
 							&& !animationisntplayable
 							&& animationcanbeplayed
 							&& ReadSinglePointer(player->field_774, 0x14) != 951
@@ -369,61 +373,7 @@ public:
 						{
 							airkick = true;
 							player->setState(0x5C, 1, 0, 0);
-						}
-						else
-						{
-							if (!Trigger::StaFlags.STA_QTE
-								&& !Trigger::GameFlags.GAME_DEPRESSSION_RAIDEN
-								&& !Trigger::StaFlags.STA_PAUSE
-								&& !Trigger::StaFlags.STA_EVENT
-								&& !Trigger::GameFlags.GAME_PLAYER_ATTACK_OFF
-								&& !player->isCodecTalk()
-								&& !player->isBladeModeActive()
-								&& player->getCurrentAction() != 0x13D
-								&& player->getCurrentAction() != 0x13F
-								&& player->getCurrentAction() != 0x13E
-								&& player->getCurrentAction() != 0x5E
-								&& !animationisntplayable
-								&& animationcanbeplayed
-								&& airkick
-								&& jump)
-							{
-								player->setState(0x5D, 1, 0, 0);
-							}
-						}
-						}
-					buttonpressedrbut = true;
-
-				}
-				else
-					buttonpressedrbut = false;
-				if (shared::IsKeyPressed(std::stoi(Samlightattack, nullptr, 16), true))
-				{
-					if (!buttonpressedlbut)
-					{
-						if (!Trigger::StaFlags.STA_QTE
-							&& !Trigger::GameFlags.GAME_DEPRESSSION_RAIDEN
-							&& !Trigger::StaFlags.STA_PAUSE
-							&& !Trigger::StaFlags.STA_EVENT
-							&& !Trigger::GameFlags.GAME_PLAYER_ATTACK_OFF
-							&& !player->isCodecTalk()
-							&& !player->isBladeModeActive()
-							&& player->getCurrentAction() != 0x13D
-							&& player->getCurrentAction() != 0x13F
-							&& player->getCurrentAction() != 0x13E
-							&& player->getCurrentAction() != 0x5E
-							&& !animationisntplayable
-							&& animationcanbeplayed
-							&& jump
-							&& ReadSinglePointer(player->field_774, 0x14) != 1348
-							&& ReadSinglePointer(player->field_774, 0x14) != 694
-							&& !airattack
-							&& player->getCurrentAction() != 0x5D
-							&& player->isInAir())
-						{
-							airattack = true;
-							player->setState(0x5C, 1, 0, 0);
-							anim = 1348;
+							anim = 951;
 							inp = true;
 						}
 						else
@@ -438,30 +388,21 @@ public:
 								&& player->getCurrentAction() != 0x13D
 								&& player->getCurrentAction() != 0x13F
 								&& player->getCurrentAction() != 0x13E
-								&& player->getCurrentAction() != 0x5E
+								&& (player->getCurrentAction() != 0x5E || ReadSinglePointer(player->field_774, 0x14) == 960)
 								&& !animationisntplayable
-								&& !jump
-								&& ReadSinglePointer(player->field_774, 0x14) != 1348
-								&& ReadSinglePointer(player->field_774, 0x14) != 694
-								&& !airattack2
-								&& player->getCurrentAction() != 0x5D
-								&& player->isInAir())
+								&& animationcanbeplayed
+								&& airkick
+								&& jump)
 							{
-								airattack2 = true;
-								player->setState(0x5C, 1, 0, 0);
-								anim = 1353;
-								inp = true;
+								player->setState(0x5D, 1, 0, 0);
 							}
 						}
-
-						
-					}
-					buttonpressedlbut = true;
+						}
+					buttonpressedrbut = true;
 
 				}
 				else
-					buttonpressedlbut = false;
-					
+					buttonpressedrbut = false;
 				if (ReadSinglePointer(player->field_774, 0x14) == 951)
 				{
 					airkick = true;
@@ -487,9 +428,19 @@ public:
 							&& player->getCurrentAction() != 0x13D
 							&& player->getCurrentAction() != 0x13F
 							&& player->getCurrentAction() != 0x13E
+							&& player->getCurrentAction() != 0x5B
+							&& player->getCurrentAction() != 0x5C
+							&& player->getCurrentAction() != 0x5D
+							&& player->getCurrentAction() != 0x4
+							&& player->getCurrentAction() != 0xC0
+							&& player->getCurrentAction() != 0x5E
+							&& player->getCurrentAction() != 0xBD
+							&& player->getCurrentAction() != 0xC
+							&& player->getCurrentAction() != 0xB
+							&& player->getCurrentAction() != 0x6B
 							&& !animationisntplayable
 							&& animationcanbeplayed
-							&& !player->isInAir())
+							)
 						{
 							player->setState(0x63, 0, 0, 0);
 							framespassed = 0;
@@ -530,12 +481,83 @@ public:
 				}
 				else
 					buttonpressed15 = false;
+				if (shared::IsKeyPressed(std::stoi(Samlightattack, nullptr, 16), true))
+				{
+					if (!buttonpressedlbut)
+					{
+						if (!Trigger::StaFlags.STA_QTE
+							&& !Trigger::GameFlags.GAME_DEPRESSSION_RAIDEN
+							&& !Trigger::StaFlags.STA_PAUSE
+							&& !Trigger::StaFlags.STA_EVENT
+							&& !Trigger::GameFlags.GAME_PLAYER_ATTACK_OFF
+							&& !player->isCodecTalk()
+							&& !player->isBladeModeActive()
+							&& player->getCurrentAction() != 0x13D
+							&& player->getCurrentAction() != 0x13F
+							&& player->getCurrentAction() != 0x13E
+							&& (player->getCurrentAction() != 0x5E || ReadSinglePointer(player->field_774, 0x14) == 960)
+							&& !animationisntplayable
+							&& animationcanbeplayed
+							&& jump
+							&& ReadSinglePointer(player->field_774, 0x14) != 1348
+							&& ReadSinglePointer(player->field_774, 0x14) != 694
+							&& !airattack
+							&& player->getCurrentAction() != 0x5D
+							&& player->getCurrentAction() != 0x63
+							&& player->getCurrentAction() != 0x51
+							&& player->isInAir())
+						{
+							airattack = true;
+							player->setState(0x5B, 0, 0, 0);
+							anim = 1348;
+							inp = true;
+						}
+						else
+						{
+							if (!Trigger::StaFlags.STA_QTE
+								&& !Trigger::GameFlags.GAME_DEPRESSSION_RAIDEN
+								&& !Trigger::StaFlags.STA_PAUSE
+								&& !Trigger::StaFlags.STA_EVENT
+								&& !Trigger::GameFlags.GAME_PLAYER_ATTACK_OFF
+								&& !player->isCodecTalk()
+								&& !player->isBladeModeActive()
+								&& player->getCurrentAction() != 0x13D
+								&& player->getCurrentAction() != 0x13F
+								&& player->getCurrentAction() != 0x13E
+								&& (player->getCurrentAction() != 0x5E || ReadSinglePointer(player->field_774, 0x14) == 960)
+								&& !animationisntplayable
+								&& !jump
+								&& ReadSinglePointer(player->field_774, 0x14) != 1348
+								&& ReadSinglePointer(player->field_774, 0x14) != 694
+								&& !airattack2
+								&& animationcanbeplayed
+								&& player->getCurrentAction() != 0x5D
+								&& player->getCurrentAction() != 0x63
+								&& player->getCurrentAction() != 0x51
+								&& player->isInAir())
+							{
+								airattack2 = true;
+								player->setState(0x5B, 0, 0, 0);
+								anim = 1353;
+								inp = true;
+							}
+						}
+
+
+					}
+					buttonpressedlbut = true;
+
+				}
+				else
+					buttonpressedlbut = false;
 				if (ReadSinglePointer(player->field_774, 0x14) != 1338
 					&& ReadSinglePointer(player->field_774, 0x14) != 1339
 					&& ReadSinglePointer(player->field_774, 0x14) != 1340
 					&& ReadSinglePointer(player->field_774, 0x14) != 1346
 					&& ReadSinglePointer(player->field_774, 0x14) != 1349
 					&& ReadSinglePointer(player->field_774, 0x14) != 1350
+					&& ReadSinglePointer(player->field_774, 0x14) != 1351
+					&& ReadSinglePointer(player->field_774, 0x14) != 1352
 					&& player->getCurrentAction() != 0x63)
 				{
 					samanim = 0;
@@ -550,7 +572,9 @@ public:
 					&& ReadSinglePointer(player->field_774, 0x14) != 1340
 					&& ReadSinglePointer(player->field_774, 0x14) != 1346
 					&& ReadSinglePointer(player->field_774, 0x14) != 1349
-					&& ReadSinglePointer(player->field_774, 0x14) != 1350)
+					&& ReadSinglePointer(player->field_774, 0x14) != 1350
+					&& ReadSinglePointer(player->field_774, 0x14) != 1351
+					&& ReadSinglePointer(player->field_774, 0x14) != 1352)
 				{
 					samanim = samanimold;
 				}
@@ -601,10 +625,20 @@ public:
 								&& player->getCurrentAction() != 0x13E
 								&& !animationisntplayable
 								&& animationcanbeplayed
-								&& !player->isInAir()
+								&& player->getCurrentAction() != 0x5B
+								&& player->getCurrentAction() != 0x5C
+								&& player->getCurrentAction() != 0x5D
+								&& player->getCurrentAction() != 0x4
+								&& player->getCurrentAction() != 0xC0
+								&& player->getCurrentAction() != 0x5E
+								&& player->getCurrentAction() != 0xBD
+								&& player->getCurrentAction() != 0xC
+								&& player->getCurrentAction() != 0xB
+								&& player->getCurrentAction() != 0x6B
 								&& anim!=1349
 								&& ReadSinglePointer(player->field_774, 0x14) != 1344
-								&& ReadSinglePointer(player->field_774, 0x14) != 1342)
+								&& ReadSinglePointer(player->field_774, 0x14) != 1342
+								&& (!player->isRunning() || ReadSinglePointer(player->field_774, 0x14) == 10))
 							{
 								player->setState(0x74, 1, 0, 0);
 								framespassed = 0;
@@ -644,7 +678,7 @@ public:
 						switch (samanim)
 						{
 						case 1350:
-							if (chargeframes == 50)
+							if (chargeframes == chargetime2)
 							{
 								if (!Trigger::StaFlags.STA_QTE
 									&& !Trigger::GameFlags.GAME_DEPRESSSION_RAIDEN
@@ -669,7 +703,7 @@ public:
 							}
 								break;
 						default:
-							if (chargeframes == 50)
+							if (chargeframes == chargetime)
 							{
 								if (!Trigger::StaFlags.STA_QTE
 									&& !Trigger::GameFlags.GAME_DEPRESSSION_RAIDEN
@@ -733,7 +767,7 @@ public:
 					{
 						if (chargeframes == 0)
 						{
-							if (framespassed > 1)
+							if (framespassed>1)
 							{
 								if (!Trigger::StaFlags.STA_QTE
 									&& !Trigger::GameFlags.GAME_DEPRESSSION_RAIDEN
@@ -961,9 +995,15 @@ public:
 					framespassed = 0;
 					chargeframes = 0;
 				}
-
-                if (player->getCurrentAction() == 0x77 
-					|| ReadSinglePointer(player->field_774, 0x14) == 310 
+				if (player->getCurrentAction() == 0x77)
+				{
+					anim = curranim;
+					player->setState(0x63, 0, 0, 0);
+					framespassed = 0;	
+					inp = true;
+				}
+				
+                if (ReadSinglePointer(player->field_774, 0x14) == 310 
 					|| player->getCurrentAction() == 0x6E 
 					|| animationcanbeplayed)
                 {
